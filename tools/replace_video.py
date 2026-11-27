@@ -13,7 +13,7 @@
      - 전체가 같은 만큼 밀림(앞에 인트로를 붙인 경우 등) → 자막 전체를 그만큼 옮김
      - 중간을 잘라 구간마다 다름 → 자막 줄마다 따로 옮기고, 확인할 줄을 알려 줌
   3. --apply 이면:
-     - 웹용 mp4 두 개(720p, 저데이터 480p)와 poster.jpg를 새로 만듭니다(HDR→SDR, 음량 −16 LUFS).
+     - 웹용 mp4 두 개(720p, 저데이터 480p)와 poster.jpg·thumb.jpg를 새로 만듭니다(HDR→SDR, 음량 −16 LUFS).
      - media/<pin>/fr.srt · ko.srt · en.srt 의 시간을 옮깁니다(원본은 .bak 으로 보관).
      - index.html 안 그 핀의 subs(자막 데이터)와 media.duration 을 새 값으로 바꿉니다(index.html.bak 보관).
 
@@ -332,6 +332,10 @@ def main():
         os.replace(t, final)
         mb = os.path.getsize(final) / 1e6
         print("  %s  %.1fMB%s" % (os.path.relpath(final, site), mb, "  ! 25MB 초과: GitHub 웹 업로드 불가(명령줄 git 사용)" if mb > 25 else ""))
+    thumb = os.path.join(mdir, "thumb.jpg")      # 첫 화면 카드용 작은 썸네일(640px)
+    r = run(["ffmpeg", "-v", "error", "-y", "-i", os.path.join(mdir, "poster.jpg"), "-vf", "scale=640:-2", "-q:v", "4", thumb])
+    if r.returncode == 0:
+        print("  %s  %.1fMB" % (os.path.relpath(thumb, site), os.path.getsize(thumb) / 1e6))
     dur = probe(cur)["duration"]
     for l, text in shifted.items():
         p = os.path.join(mdir, "%s.srt" % l)
@@ -359,7 +363,7 @@ def main():
     print("  index.html: %s 핀의 자막 %d줄, 길이 %.1f초로 갱신 (원본은 index.html.bak)" % (a.pin, len(items), dur))
     if moved:
         print("  전문가 코멘트 장면 시각: " + ", ".join("%g→%g초" % mv for mv in moved))
-    print("\n끝. GitHub에 다시 올릴 파일: index.html, media/%s/ 의 mp4 2개, poster.jpg%s" % (a.pin, ", fr.srt·ko.srt·en.srt" if mode != "same" else ""))
+    print("\n끝. GitHub에 다시 올릴 파일: index.html, media/%s/ 의 mp4 2개, poster.jpg, thumb.jpg%s" % (a.pin, ", fr.srt·ko.srt·en.srt" if mode != "same" else ""))
 
 
 if __name__ == "__main__":
